@@ -1,7 +1,6 @@
 # Prácticas-ESP32
-##Benicio Pavón
+## Benicio Pavón
 
-![alt text](media/esp32.png)
+Los ejercicios de este repositorio van enfocados a aprender a usar el microcontrolador **ESP32** y a entender **concurrecia**.
 
-
-Los ejercicios de este repositorio van enfocados a entender **concurrecia**.
+![](media/esp32.png)
