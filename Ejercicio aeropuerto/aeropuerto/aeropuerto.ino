@@ -1,13 +1,13 @@
 SemaphoreHandle_t pista[3];  // Hago un vector de semaforos, uno para cada pista
 
-QueueHandle_t listaEspera;          // 
-QueueHandle_t canalComunicacion[5];
+QueueHandle_t listaEspera;           // Cola que lleva el orden de los aviones que piden permiso de aterrizar
+QueueHandle_t canalComunicacion[5];  // Vector de colas  que comunican la torre con los aviones. Específicamente para que la torre indique en que pista aterrizar
 
-int recibirPistaVacia() {
+int recibirPistaVacia() {  //Creo una funcion que devuelva una pista vacia
   int pistaVacia;
   for (int i = 0; i < 3; i++) {
-    if (xSemaphoreTake(pista[i], 1) == pdTRUE) {
-      xSemaphoreGive(pista[i]);
+    if (xSemaphoreTake(pista[i], 1) == pdTRUE) {  //Recorre cada pista y trata de tomarla, el tiempo de espera es de 1ms asi si el semaforo esta tomado pasa al siguiente
+      xSemaphoreGive(pista[i]);                   //Apenas toma el semaforo lo libera
       pistaVacia = i;
       break;
     }
@@ -16,18 +16,18 @@ int recibirPistaVacia() {
   return pistaVacia;
 }
 
-void avion1(void *parameter) {
-  int id = 0;
-  int aterrizaje;
+void avion1(void *parameter) {  //Tarea para el avion 1. Los comentarios aplican para el resto de tareas "avion"
+  int id = 0;                   //Le asigno una identificacion para la comunicacion con torre
+  int aterrizaje;               //Variable que va indicar la pista donde aterrizar
   while (1) {
-    vTaskDelay(pdMS_TO_TICKS(random(3000, 6001)));
+    vTaskDelay(pdMS_TO_TICKS(random(3000, 6001)));  //Espera un timepo aleatorio entre 3 y 6 segundos
     Serial.printf("Avion %d: Solicitando permiso para aterrizar\n", id + 1);
-    xQueueSend(listaEspera, &id, portMAX_DELAY);
+    xQueueSend(listaEspera, &id, portMAX_DELAY);  //El avion se envia a la cola de espera
 
-    xQueueReceive(canalComunicacion[id], &aterrizaje, portMAX_DELAY);
+    xQueueReceive(canalComunicacion[id], &aterrizaje, portMAX_DELAY); //Espera a que la torre le indique en que pista aterrizar
     xSemaphoreTake(pista[aterrizaje], portMAX_DELAY);
     Serial.printf("Avion %d: Aterrizando en la pista %d\n", id + 1, aterrizaje + 1);
-    vTaskDelay(pdMS_TO_TICKS(random(5000, 10001)));
+    vTaskDelay(pdMS_TO_TICKS(random(5000, 10001)));  //Ocupa la pista un tiempo aleatorio entre 5 y 10 segundos
 
     xSemaphoreGive(pista[aterrizaje]);
     Serial.printf("Avion %d: Pista %d liberada\n", id + 1, aterrizaje + 1);
@@ -110,9 +110,9 @@ void torre(void *parameter) {
   int id;
   int pista;
   while (1) {
-    xQueueReceive(listaEspera, &id, portMAX_DELAY);
-    pista = recibirPistaVacia();
-    xQueueSend(canalComunicacion[id], &pista, portMAX_DELAY);
+    xQueueReceive(listaEspera, &id, portMAX_DELAY); //Recibe el primer avion de la cola
+    pista = recibirPistaVacia();                    //Recibe una pista libre
+    xQueueSend(canalComunicacion[id], &pista, portMAX_DELAY);  //Envia el numero de la pista libre al avion
     Serial.printf("Torre de control: Permiso concedido para el avión %d para aterrizar en la pista %d\n", id + 1, pista + 1);
   }
 }
