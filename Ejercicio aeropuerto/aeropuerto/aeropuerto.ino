@@ -1,6 +1,6 @@
 SemaphoreHandle_t pista[3];  // Hago un vector de semaforos, uno para cada pista
 
-QueueHandle_t listaEspera;
+QueueHandle_t listaEspera;          // 
 QueueHandle_t canalComunicacion[5];
 
 int recibirPistaVacia() {
